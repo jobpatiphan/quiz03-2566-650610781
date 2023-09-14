@@ -5,34 +5,51 @@ import { NextResponse } from "next/server";
 
 export const GET = async (request) => {
   readDB();
+  const roomId = request.nextUrl.searchParams.get("roomId");
 
-  // return NextResponse.json(
-  //   {
-  //     ok: false,
-  //     message: `Room is not found`,
-  //   },
-  //   { status: 404 }
-  // );
+  let filtered = DB.messages;
+  if (roomId !== null) {
+    filtered = filtered.filter((std) => std.roomId === roomId);
+  }
+  console.log(filtered);
+  if (filtered.length === 0) {
+    return NextResponse.json(
+      {
+        ok: false,
+        message: `Room is not found`,
+      },
+      { status: 404 }
+    );
+  }
+  return NextResponse.json({ ok: true, messages: filtered });
 };
 
 export const POST = async (request) => {
   readDB();
+  const body = await request.json();
+  const roomId = body.roomId;
+  const message = body.messageText;
 
-  // return NextResponse.json(
-  //   {
-  //     ok: false,
-  //     message: `Room is not found`,
-  //   },
-  //   { status: 404 }
-  // );
+  //check duplicate student id
+  const foundDupe = DB.messages.find((std) => std.roomId === body.roomId);
+  if (foundDupe) {
+    return NextResponse.json(
+      {
+        ok: false,
+        message: `Room is not found`,
+      },
+      { status: 404 }
+    );
+  }
 
   const messageId = nanoid();
+  DB.messages.push({ roomId, messageId, message });
 
   writeDB();
 
   return NextResponse.json({
     ok: true,
-    // messageId,
+    messageId,
     message: "Message has been sent",
   });
 };
